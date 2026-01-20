@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum QuoteStatus {
+  draft
+  sent
+  approved
+  rejected
+  converted
+}
+
+enum OrderStatus {
+  open
+  fulfilled
+  cancelled
+}
+
+enum OptionModifierType {
+  fixed
+  percent
+}
+
+enum PricingRuleType {
+  base_per_area
+  minimum_line
+  volume_discount_percent
+  material_adjustment_percent
+}
+
+model Client {
+  id           String   @id @default(uuid()) @db.Uuid
+  companyName  String   @map("company_name")
+  contactName  String   @map("contact_name")
+  email        String
+  phone        String?
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  quotes       Quote[]
+  orders       Order[]
+
+  @@map("clients")
+}
+
+model Product {
+  id                   String        @id @default(uuid()) @db.Uuid
+  name                 String
+  description          String?
+  dimensionUnitLabel   String        @default("m") @map("dimension_unit_label")
+  areaUnitLabel        String        @default("sq_m") @map("area_unit_label")
+  active               Boolean       @default(true)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  options              ProductOption[]
+  pricingRules         PricingRule[]
+  laborRules           LaborRule[]
+  quoteItems           QuoteItem[]
+
+  @@map("products")
+}
+
+model Material {
+  id               String      @id @default(uuid()) @db.Uuid
+  name             String
+  costPerAreaUnit  Decimal     @map("cost_per_area_unit") @db.Decimal(14, 4)
+  areaUnitLabel    String      @default("sq_m") @map("area_unit_label")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  quoteItems       QuoteItem[]
+  pricingRules     PricingRule[]
+
+  @@map("materials")
+}
+
+model ProductOption {
+  id             String             @id @default(uuid()) @db.Uuid
+  productId      String             @map("product_id") @db.Uuid
+  product        Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name           String
+  modifierType   OptionModifierType @map("modifier_type")
+  modifierValue  Decimal            @map("modifier_value") @db.Decimal(14, 4)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("options")
+}
+
+model PricingRule {
+  id          String           @id @default(uuid()) @db.Uuid
+  productId   String           @map("product_id") @db.Uuid
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  priority    Int              @default(0)
+  ruleType    PricingRuleType  @map("rule_type")
+  amount      Decimal          @db.Decimal(14, 4)
+  minQuantity Int?             @map("min_quantity")
+  materialId  String?          @map("material_id") @db.Uuid
+  material    Material?        @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  label       String?
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("pricing_rules")
+}
+
+model LaborRule {
+  id                   String   @id @default(uuid()) @db.Uuid
+  productId            String   @map("product_id") @db.Uuid
+  product              Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  label                String
+  setupAmount          Decimal  @default(0) @map("setup_amount") @db.Decimal(14, 4)
+  hourlyRate           Decimal  @map("hourly_rate") @db.Decimal(14, 4)
+  minutesPerAreaUnit   Decimal  @default(0) @map("minutes_per_area_unit") @db.Decimal(14, 4)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("labor_rules")
+}
+
+model Quote {
+  id               String               @id @default(uuid()) @db.Uuid
+  clientId         String               @map("client_id") @db.Uuid
+  client           Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  quoteNumber      String               @unique @map("quote_number")
+  status           QuoteStatus          @default(draft)
+  currency         String               @default("USD")
+  taxRatePercent   Decimal              @default(0) @map("tax_rate_percent") @db.Decimal(8, 4)
+  notes            String?
+  subtotal         Decimal              @default(0) @db.Decimal(14, 4)
+  taxAmount        Decimal              @default(0) @map("tax_amount") @db.Decimal(14, 4)
+  grandTotal       Decimal              @default(0) @map("grand_total") @db.Decimal(14, 4)
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  items            QuoteItem[]
+  statusHistory    QuoteStatusHistory[]
+  order            Order?
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  quoteId     String    @map("quote_id") @db.Uuid
+  quote       Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId   String    @map("product_id") @db.Uuid
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  materialId  String    @map("material_id") @db.Uuid
+  material    Material  @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  label       String?
+  width       Decimal   @db.Decimal(14, 4)
+  height      Decimal   @db.Decimal(14, 4)
+  quantity    Int       @default(1)
+  optionIds   Json      @map("option_ids")
+  computed    Json?
+  lineTotal   Decimal   @default(0) @map("line_total") @db.Decimal(14, 4)
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("quote_items")
+}
+
+model QuoteStatusHistory {
+  id         String       @id @default(uuid()) @db.Uuid
+  quoteId    String       @map("quote_id") @db.Uuid
+  quote      Quote        @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  fromStatus QuoteStatus? @map("from_status")
+  toStatus   QuoteStatus  @map("to_status")
+  note       String?
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("quote_status_history")
+}
+
+model Order {
+  id        String      @id @default(uuid()) @db.Uuid
+  quoteId   String      @unique @map("quote_id") @db.Uuid
+  quote     Quote       @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  clientId  String      @map("client_id") @db.Uuid
+  client    Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  status    OrderStatus @default(open)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("orders")
+}
