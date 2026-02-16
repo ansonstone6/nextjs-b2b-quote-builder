@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js AI Boilerplate",
-  description: "Production-ready Next.js boilerplate with pluggable AI provider registry",
+  title: {
+    default: "Configurable Quote Builder",
+    template: "%s · Configurable Quote Builder",
+  },
+  description:
+    "B2B configurable pricing and quotes on Next.js, with Prisma, Supabase Postgres, streaming AI chat, and shadcn/ui.",
 };
 
 export default function RootLayout({
@@ -27,7 +32,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full flex flex-col bg-background text-foreground">{children}</body>
+      <body className="h-full flex flex-col bg-background text-foreground">
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }
