@@ -9,6 +9,10 @@ import { prisma } from "../src/lib/prisma";
 import { recalculateQuote } from "../src/lib/pricing/recalculate-quote";
 
 async function main() {
+  await prisma.syncLog.deleteMany();
+  await prisma.syncJob.deleteMany();
+  await prisma.externalReference.deleteMany();
+  await prisma.integrationConnection.deleteMany();
   await prisma.quoteStatusHistory.deleteMany();
   await prisma.quoteItem.deleteMany();
   await prisma.order.deleteMany();
@@ -27,6 +31,11 @@ async function main() {
         contactName: "Alex Morgan",
         email: "procurement@northfield.example",
         phone: "+1 555 0100",
+        billingLine1: "1200 Commerce Way",
+        billingCity: "Portland",
+        billingState: "OR",
+        billingPostal: "97201",
+        billingCountry: "US",
       },
     }),
     prisma.client.create({
@@ -257,7 +266,48 @@ async function main() {
     ],
   });
 
+  const approvedQuote = await prisma.quote.create({
+    data: {
+      clientId: c1.id,
+      quoteNumber: "QUO-2026-00003",
+      status: QuoteStatus.approved,
+      currency: "USD",
+      taxRatePercent: 7.5,
+      notes: "Ready for QuickBooks invoice sync (seed).",
+    },
+  });
+
+  await prisma.quoteItem.create({
+    data: {
+      quoteId: approvedQuote.id,
+      productId: p2.id,
+      materialId: mPrem.id,
+      label: "Services package",
+      width: 2,
+      height: 1.5,
+      quantity: 2,
+      optionIds: [],
+      sortOrder: 0,
+    },
+  });
+
+  await prisma.quoteStatusHistory.createMany({
+    data: [
+      { quoteId: approvedQuote.id, toStatus: QuoteStatus.draft },
+      {
+        quoteId: approvedQuote.id,
+        fromStatus: QuoteStatus.draft,
+        toStatus: QuoteStatus.approved,
+        note: "Approved for QuickBooks sync demo",
+      },
+    ],
+  });
+
+  await recalculateQuote(approvedQuote.id);
+
+  console.log("Seed OK");
 }
+
 
 main()
   .then(async () => {
