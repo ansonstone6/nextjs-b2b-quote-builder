@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { QuickBooksSyncPanel } from "@/modules/quickbooks/components/quickbooks-sync-panel";
 
 type Catalog = {
   products: {
@@ -292,6 +293,8 @@ export function QuoteEditor({ initial }: { initial: SerializedQuote }) {
           ) : null}
         </CardContent>
       </Card>
+
+      <QuickBooksSyncPanel quoteId={quote.id} quoteStatus={quote.status} />
 
       <div className="flex flex-wrap gap-3">
         <a

@@ -31,6 +31,33 @@ export default async function HomePage() {
         </Link>
       </div>
 
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle>Modules</CardTitle>
+          <CardDescription>Feature areas in this demo app.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
+          <div className="rounded-md border bg-card p-3 space-y-2">
+            <p className="font-medium">Quote builder</p>
+            <p className="text-muted-foreground">
+              Configurable products, server-side pricing, PDF export, orders.
+            </p>
+            <Link href="/quotes/new" className="underline">
+              Create quote
+            </Link>
+          </div>
+          <div className="rounded-md border bg-card p-3 space-y-2">
+            <p className="font-medium">QuickBooks invoice sync</p>
+            <p className="text-muted-foreground">
+              OAuth 2.0, encrypted tokens, quote-to-invoice with sync jobs and logs.
+            </p>
+            <Link href="/quickbooks" className="underline">
+              Open QuickBooks module
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Recent</CardTitle>
