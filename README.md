@@ -27,6 +27,7 @@ Copy [`.env.example`](./.env.example) to `.env.local` and adjust.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | No | Same; falls back to legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
 | `SUPABASE_SECRET_KEY` | No | Only for `createSupabaseAdminClient`; legacy `SUPABASE_SERVICE_ROLE_KEY` also works |
 | `QUOTING_BRAND_NAME` | No | PDF header line |
+| `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_REDIRECT_URI`, `QBO_ENVIRONMENT`, `TOKEN_ENCRYPTION_KEY` | No | QuickBooks module only |
 
 ### Supabase Postgres and IPv4
 
@@ -120,6 +121,17 @@ src/
     supabase/          # Optional Supabase clients + key resolution
     ai/...
 ```
+
+## QuickBooks module
+
+Invoice sync lives under **`/quickbooks`** (see [`src/modules/quickbooks/README.md`](src/modules/quickbooks/README.md)).
+
+- OAuth 2.0 connection with encrypted tokens and automatic refresh
+- Sync approved quotes to QuickBooks customers and invoices
+- `sync_jobs` + `sync_logs` with retries and idempotency per quote
+- Nav: **QuickBooks hub**, **Connect**, **QB quotes**, **Sync dashboard**
+
+Requires `QBO_*` and `TOKEN_ENCRYPTION_KEY` in `.env.local` (sandbox documented in the module README).
 
 ## Quote workflow (short)
 
