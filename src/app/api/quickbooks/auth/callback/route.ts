@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { exchangeAuthorizationCode } from "@/modules/quickbooks/lib/oauth";
+import { readDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -26,7 +27,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    await exchangeAuthorizationCode(code, realmId);
+    const demoSessionId = await readDemoSessionId();
+    await exchangeAuthorizationCode(code, realmId, demoSessionId);
     base.searchParams.set("connected", "1");
     return NextResponse.redirect(base);
   } catch (e) {

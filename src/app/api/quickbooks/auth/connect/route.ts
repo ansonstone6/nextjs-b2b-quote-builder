@@ -3,8 +3,12 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { buildAuthorizeUrl } from "@/modules/quickbooks/lib/oauth";
 import { getQboConfig } from "@/modules/quickbooks/lib/config";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export async function GET(req: Request) {
+  // Make sure a demo-session cookie exists before we redirect off-site,
+  // so the same browser is recognised when Intuit redirects back.
+  await ensureDemoSessionId();
   const cfg = getQboConfig();
   const origin = new URL(req.url).origin;
   const fallbackRedirect = `${origin}/api/quickbooks/auth/callback`;

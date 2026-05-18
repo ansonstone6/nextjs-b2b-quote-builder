@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { syncQuoteToQuickBooks } from "@/modules/quickbooks/lib/sync";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export async function POST(req: Request) {
   try {
@@ -7,7 +8,8 @@ export async function POST(req: Request) {
     if (!body.quoteId) {
       return NextResponse.json({ error: "quoteId is required" }, { status: 400 });
     }
-    const result = await syncQuoteToQuickBooks(body.quoteId);
+    const demoSessionId = await ensureDemoSessionId();
+    const result = await syncQuoteToQuickBooks(body.quoteId, { demoSessionId });
     return NextResponse.json(result);
   } catch (e) {
     console.error(e);

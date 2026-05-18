@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncQuoteToQuickBooks } from "@/modules/quickbooks/lib/sync";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 type RouteParams = { params: Promise<{ jobId: string }> };
 
@@ -20,7 +21,8 @@ export async function POST(_req: Request, { params }: RouteParams) {
       data: { status: "pending", lastError: null },
     });
 
-    const result = await syncQuoteToQuickBooks(job.quoteId, { retryJobId: jobId });
+    const demoSessionId = await ensureDemoSessionId();
+    const result = await syncQuoteToQuickBooks(job.quoteId, { retryJobId: jobId, demoSessionId });
     return NextResponse.json(result);
   } catch (e) {
     console.error(e);

@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getQboConfig } from "@/modules/quickbooks/lib/config";
 import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export async function GET() {
   const cfg = getQboConfig();
-  const connection = await getActiveQuickBooksConnection();
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
 
   return NextResponse.json({
     configured: cfg.configured,

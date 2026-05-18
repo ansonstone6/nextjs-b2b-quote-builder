@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
 import { getQboConfig } from "@/modules/quickbooks/lib/config";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 import { ConnectionPanel } from "@/modules/quickbooks/components/connection-panel";
 import { buttonVariants } from "@/components/ui/button-styles";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,8 @@ type PageProps = { searchParams: Promise<{ connected?: string; error?: string }>
 export default async function QuickBooksConnectPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const cfg = getQboConfig();
-  const connection = await getActiveQuickBooksConnection();
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
 
   return (
     <main className="mx-auto w-full max-w-2xl space-y-6 p-6">

@@ -50,7 +50,11 @@ async function exchangeToken(body: Record<string, string>) {
   return json;
 }
 
-export async function exchangeAuthorizationCode(code: string, realmId: string) {
+export async function exchangeAuthorizationCode(
+  code: string,
+  realmId: string,
+  demoSessionId?: string | null,
+) {
   const cfg = getQboConfig();
   const tokens = await exchangeToken({
     grant_type: "authorization_code",
@@ -64,6 +68,7 @@ export async function exchangeAuthorizationCode(code: string, realmId: string) {
 
   const connection = await saveConnection({
     realmId,
+    demoSessionId: demoSessionId ?? null,
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
     accessTokenExpiresAt,
