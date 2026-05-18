@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
       where: { id },
       include: {
         client: true,
-        items: { include: { product: true, material: true }, orderBy: { sortOrder: "asc" } },
+        items: { include: { product: { include: { options: true } }, material: true }, orderBy: { sortOrder: "asc" } },
         order: { select: { id: true, status: true } },
       },
     });
@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const brand = process.env.QUOTING_BRAND_NAME ?? "Configurable Quote Builder";
+    const brand = process.env.QUOTING_BRAND_NAME ?? "Custom Framing Studio";
     const serialized = serializeQuote(quote);
     const buffer = await renderToBuffer(<QuotePdfDocument brand={brand} quote={serialized} />);
 

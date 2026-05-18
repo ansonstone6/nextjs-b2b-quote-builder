@@ -41,10 +41,16 @@ enum OrderStatus {
 enum OptionModifierType {
   fixed
   percent
+  /// Per square foot of artwork area. Used for glass and mat charges that scale
+  /// with sheet area independently of the moulding/perimeter charge.
+  area
 }
 
 enum PricingRuleType {
   base_per_area
+  /// Perimeter charge: perimeter (linear feet) × amount. Used for moulding cost,
+  /// where the material has a per-foot list price and the frame perimeter drives the spend.
+  base_per_perimeter
   minimum_line
   volume_discount_percent
   material_adjustment_percent
@@ -86,13 +92,23 @@ model Product {
 }
 
 model Material {
-  id               String      @id @default(uuid()) @db.Uuid
-  name             String
-  costPerAreaUnit  Decimal     @map("cost_per_area_unit") @db.Decimal(14, 4)
-  areaUnitLabel    String      @default("sq_m") @map("area_unit_label")
-  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  quoteItems       QuoteItem[]
-  pricingRules     PricingRule[]
+  id                  String      @id @default(uuid()) @db.Uuid
+  name                String
+  /// Per-area unit cost (kept for non-moulding materials and back-compat). For mouldings,
+  /// `pricePerFoot` is the authoritative value and this is left at 0.
+  costPerAreaUnit     Decimal     @map("cost_per_area_unit") @db.Decimal(14, 4)
+  areaUnitLabel       String      @default("sq_m") @map("area_unit_label")
+  /// Moulding-specific: list price per linear foot. Used with PricingRuleType.base_per_perimeter.
+  pricePerFoot        Decimal?    @map("price_per_foot") @db.Decimal(14, 4)
+  /// Trade supplier name shown in the moulding catalog (e.g. "Larson-Juhl", "Roma Moulding").
+  supplier            String?
+  /// Profile face width in inches, shown in catalog cards (e.g. 2 for a 2" walnut profile).
+  profileWidthInches  Decimal?    @map("profile_width_inches") @db.Decimal(6, 3)
+  /// Stock indicator surfaced on catalog cards.
+  inStock             Boolean     @default(true) @map("in_stock")
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  quoteItems          QuoteItem[]
+  pricingRules        PricingRule[]
 
   @@map("materials")
 }
@@ -212,6 +228,10 @@ model IntegrationConnection {
   provider              IntegrationProvider
   realmId               String              @map("realm_id")
   companyName           String?             @map("company_name")
+  /// Nullable demo-session scope. When a visitor connects via the public demo, we stamp
+  /// their browser-scoped session id here so each visitor sees only their own QBO sandbox.
+  /// In a production deploy with real auth this becomes user_id.
+  demoSessionId         String?             @map("demo_session_id")
   accessTokenEncrypted  String              @map("access_token_encrypted")
   refreshTokenEncrypted String              @map("refresh_token_encrypted")
   accessTokenExpiresAt  DateTime            @map("access_token_expires_at") @db.Timestamptz(6)
@@ -219,8 +239,10 @@ model IntegrationConnection {
   connectedAt           DateTime            @default(now()) @map("connected_at") @db.Timestamptz(6)
   updatedAt             DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   syncJobs              SyncJob[]
+  externalRefs          ExternalReference[]
 
-  @@unique([provider, realmId])
+  @@unique([provider, realmId, demoSessionId])
+  @@index([provider, demoSessionId])
   @@map("integration_connections")
 }
 
@@ -228,6 +250,11 @@ model ExternalReference {
   id           String             @id @default(uuid()) @db.Uuid
   quoteId      String             @map("quote_id") @db.Uuid
   quote        Quote              @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  /// Nullable for back-compat with rows created before per-session scoping. New rows
+  /// always set this so the same quote can be synced to multiple QBO realms (e.g.
+  /// each demo visitor's own sandbox).
+  connectionId String?            @map("connection_id") @db.Uuid
+  connection   IntegrationConnection? @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   provider     IntegrationProvider
   entityType   ExternalEntityType @map("entity_type")
   externalId   String             @map("external_id")
@@ -235,7 +262,8 @@ model ExternalReference {
   metadata     Json?
   createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@unique([quoteId, provider, entityType])
+  @@unique([quoteId, provider, entityType, connectionId])
+  @@index([quoteId, provider, entityType])
   @@map("external_references")
 }
 

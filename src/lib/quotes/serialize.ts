@@ -1,5 +1,6 @@
-import type { Client, Material, Product, Quote, QuoteItem } from "@prisma/client";
+import type { Client, Material, Product, ProductOption, Quote, QuoteItem } from "@prisma/client";
 import type { QuoteItemComputed } from "@/lib/pricing/types";
+import { mouldingImageFor } from "@/lib/catalog/moulding-image";
 
 export type SerializedQuoteItem = {
   id: string;
@@ -11,11 +12,18 @@ export type SerializedQuoteItem = {
   height: string;
   quantity: number;
   optionIds: string[];
+  selectedOptionNames: string[];
   computed: QuoteItemComputed | null;
   lineTotal: string;
   sortOrder: number;
   product: Pick<Product, "id" | "name" | "dimensionUnitLabel" | "areaUnitLabel">;
-  material: Pick<Material, "id" | "name">;
+  material: Pick<Material, "id" | "name"> & {
+    imageUrl: string | null;
+    pricePerFoot: string | null;
+    supplier: string | null;
+    profileWidthInches: string | null;
+    inStock: boolean;
+  };
 };
 
 export type SerializedQuote = {
@@ -38,12 +46,16 @@ export type SerializedQuote = {
 
 export function serializeQuoteItem(
   item: QuoteItem & {
-    product: Product;
+    product: Product & { options?: ProductOption[] };
     material: Material;
   },
 ): SerializedQuoteItem {
   const raw = item.optionIds;
   const optionIds = Array.isArray(raw) ? (raw as string[]) : [];
+  const productOptions = item.product.options ?? [];
+  const selectedOptionNames = productOptions
+    .filter((o) => optionIds.includes(o.id))
+    .map((o) => o.name);
   return {
     id: item.id,
     quoteId: item.quoteId,
@@ -54,6 +66,7 @@ export function serializeQuoteItem(
     height: item.height.toString(),
     quantity: item.quantity,
     optionIds,
+    selectedOptionNames,
     computed: (item.computed as QuoteItemComputed | null) ?? null,
     lineTotal: item.lineTotal.toString(),
     sortOrder: item.sortOrder,
@@ -63,14 +76,25 @@ export function serializeQuoteItem(
       dimensionUnitLabel: item.product.dimensionUnitLabel,
       areaUnitLabel: item.product.areaUnitLabel,
     },
-    material: { id: item.material.id, name: item.material.name },
+    material: {
+      id: item.material.id,
+      name: item.material.name,
+      imageUrl: mouldingImageFor(item.material.name),
+      pricePerFoot: item.material.pricePerFoot?.toString() ?? null,
+      supplier: item.material.supplier,
+      profileWidthInches: item.material.profileWidthInches?.toString() ?? null,
+      inStock: item.material.inStock,
+    },
   };
 }
 
 export function serializeQuote(
   quote: Quote & {
     client: Client;
-    items: (QuoteItem & { product: Product; material: Material })[];
+    items: (QuoteItem & {
+      product: Product & { options?: ProductOption[] };
+      material: Material;
+    })[];
     order: { id: string; status: string } | null;
   },
 ): SerializedQuote {

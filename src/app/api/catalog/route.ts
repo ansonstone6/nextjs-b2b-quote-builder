@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { mouldingImageFor } from "@/lib/catalog/moulding-image";
 
 export async function GET() {
   try {
@@ -43,6 +44,11 @@ export async function GET() {
         name: m.name,
         costPerAreaUnit: m.costPerAreaUnit.toString(),
         areaUnitLabel: m.areaUnitLabel,
+        pricePerFoot: m.pricePerFoot?.toString() ?? null,
+        supplier: m.supplier,
+        profileWidthInches: m.profileWidthInches?.toString() ?? null,
+        inStock: m.inStock,
+        imageUrl: mouldingImageFor(m.name),
       })),
     });
   } catch (e) {

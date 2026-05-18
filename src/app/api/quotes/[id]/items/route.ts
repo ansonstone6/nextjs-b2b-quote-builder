@@ -57,7 +57,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       where: { id },
       include: {
         client: true,
-        items: { include: { product: true, material: true }, orderBy: { sortOrder: "asc" } },
+        items: { include: { product: { include: { options: true } }, material: true }, orderBy: { sortOrder: "asc" } },
         order: { select: { id: true, status: true } },
       },
     });

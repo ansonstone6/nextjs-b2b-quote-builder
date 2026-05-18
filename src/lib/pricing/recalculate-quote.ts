@@ -13,7 +13,7 @@ export async function recalculateQuote(quoteId: string) {
     include: {
       items: {
         orderBy: { sortOrder: "asc" },
-        include: { product: true, material: true },
+        include: { product: { include: { options: true } }, material: true },
       },
     },
   });
@@ -74,10 +74,13 @@ export async function recalculateQuote(quoteId: string) {
       currency: quote.currency,
       material: {
         id: item.material.id,
+        name: item.material.name,
         costPerAreaUnit: item.material.costPerAreaUnit,
+        pricePerFoot: item.material.pricePerFoot,
       },
       selectedOptions: selectedOptions.map((o) => ({
         id: o.id,
+        name: o.name,
         modifierType: o.modifierType,
         modifierValue: o.modifierValue,
       })),
