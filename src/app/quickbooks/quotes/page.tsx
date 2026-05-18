@@ -4,16 +4,31 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-styles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuickBooksQuotesPage() {
+  // Scope the "QB invoice <id>" badge to the current visitor's connection so two
+  // visitors looking at the same approved quote each see their own sync state.
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
   const quotes = await prisma.quote.findMany({
     where: { status: { in: ["approved", "synced"] } },
     orderBy: { updatedAt: "desc" },
     include: {
       client: { select: { companyName: true, email: true } },
-      externalRefs: { where: { provider: "quickbooks", entityType: "invoice" } },
+      externalRefs: {
+        where: {
+          provider: "quickbooks",
+          entityType: "invoice",
+          // When no connection is active, fall back to an impossible UUID so the
+          // include returns an empty array (badge hides). Real production code with
+          // user auth would just gate the whole page behind a sign-in instead.
+          connectionId: connection?.id ?? "00000000-0000-0000-0000-000000000000",
+        },
+      },
     },
   });
 

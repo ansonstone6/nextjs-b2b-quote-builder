@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { getQuoteSyncState } from "@/modules/quickbooks/lib/sync";
+import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 type RouteParams = { params: Promise<{ quoteId: string }> };
 
 export async function GET(_req: Request, { params }: RouteParams) {
   const { quoteId } = await params;
-  const state = await getQuoteSyncState(quoteId);
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
+  const state = await getQuoteSyncState(quoteId, connection?.id ?? null);
   return NextResponse.json({
     invoiceId: state.invoiceRef?.externalId ?? null,
     invoiceUrl: state.invoiceRef?.externalUrl ?? null,

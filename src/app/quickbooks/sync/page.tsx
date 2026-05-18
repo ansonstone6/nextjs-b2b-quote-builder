@@ -4,16 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-styles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 export const dynamic = "force-dynamic";
 
 export default async function SyncDashboardPage() {
+  // Demo-session scope: only show sync jobs for THIS visitor's connection.
+  // Without a connection (visitor hasn't connected yet), the impossible-UUID
+  // sentinel keeps Prisma happy and returns an empty list.
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
   const jobs = await prisma.syncJob.findMany({
+    where: { connectionId: connection?.id ?? "00000000-0000-0000-0000-000000000000" },
     orderBy: { updatedAt: "desc" },
     take: 100,
-    include: {
-      quote: { select: { quoteNumber: true, status: true } },
-    },
+    include: { quote: { select: { quoteNumber: true, status: true } } },
   });
 
   const counts = {

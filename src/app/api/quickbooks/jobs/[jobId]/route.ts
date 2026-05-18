@@ -8,12 +8,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
   const job = await prisma.syncJob.findUnique({
     where: { id: jobId },
     include: {
-      quote: {
-        include: {
-          client: true,
-          externalRefs: { where: { provider: "quickbooks" } },
-        },
-      },
+      quote: { include: { client: true } },
       connection: true,
       logs: { orderBy: { createdAt: "asc" } },
     },
@@ -21,6 +16,10 @@ export async function GET(_req: Request, { params }: RouteParams) {
   if (!job) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  // Per-connection scope: external refs from this job's realm only.
+  const externalRefs = await prisma.externalReference.findMany({
+    where: { quoteId: job.quoteId, provider: "quickbooks", connectionId: job.connectionId },
+  });
   return NextResponse.json({
     id: job.id,
     status: job.status,
@@ -36,7 +35,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
       client: job.quote.client.companyName,
       grandTotal: job.quote.grandTotal.toString(),
     },
-    externalRefs: job.quote.externalRefs.map((r) => ({
+    externalRefs: externalRefs.map((r) => ({
       entityType: r.entityType,
       externalId: r.externalId,
       externalUrl: r.externalUrl,

@@ -14,17 +14,16 @@ export default async function SyncJobDetailPage({ params }: PageProps) {
   const job = await prisma.syncJob.findUnique({
     where: { id: jobId },
     include: {
-      quote: {
-        include: {
-          client: true,
-          externalRefs: { where: { provider: "quickbooks" } },
-        },
-      },
+      quote: { include: { client: true } },
       logs: { orderBy: { createdAt: "asc" } },
     },
   });
-
   if (!job) notFound();
+  // External refs are scoped to the job's connection so the detail view only shows
+  // invoice/customer references from THIS realm, not other visitors' sandboxes.
+  const externalRefs = await prisma.externalReference.findMany({
+    where: { quoteId: job.quoteId, provider: "quickbooks", connectionId: job.connectionId },
+  });
 
   const initial = {
     id: job.id,
@@ -41,7 +40,7 @@ export default async function SyncJobDetailPage({ params }: PageProps) {
       client: job.quote.client.companyName,
       grandTotal: job.quote.grandTotal.toString(),
     },
-    externalRefs: job.quote.externalRefs.map((r) => ({
+    externalRefs: externalRefs.map((r) => ({
       entityType: r.entityType,
       externalId: r.externalId,
       externalUrl: r.externalUrl,

@@ -9,8 +9,8 @@ import {
   findCustomerByEmail,
 } from "@/modules/quickbooks/lib/qbo-client";
 
-function idempotencyKey(quoteId: string) {
-  return `quickbooks-invoice:${quoteId}`;
+function idempotencyKey(quoteId: string, connectionId: string) {
+  return `quickbooks-invoice:${connectionId}:${quoteId}`;
 }
 
 function num(v: { toString(): string } | number): number {
@@ -29,49 +29,51 @@ async function appendLog(
   });
 }
 
-export async function getQuoteSyncState(quoteId: string) {
-  const invoiceRef = await prisma.externalReference.findUnique({
-    where: {
-      quoteId_provider_entityType: {
-        quoteId,
-        provider: "quickbooks",
-        entityType: "invoice",
-      },
-    },
-  });
-  const customerRef = await prisma.externalReference.findUnique({
-    where: {
-      quoteId_provider_entityType: {
-        quoteId,
-        provider: "quickbooks",
-        entityType: "customer",
-      },
-    },
-  });
+export async function getQuoteSyncState(quoteId: string, connectionId?: string | null) {
+  // Per-connection sync state: each QBO realm has its own invoice/customer references
+  // for a given quote, so we filter by connectionId. Falls back to "any" when no
+  // connection is provided (e.g. status-overview before connecting).
+  const whereInvoice = {
+    quoteId,
+    provider: "quickbooks" as const,
+    entityType: "invoice" as const,
+    ...(connectionId ? { connectionId } : {}),
+  };
+  const whereCustomer = {
+    quoteId,
+    provider: "quickbooks" as const,
+    entityType: "customer" as const,
+    ...(connectionId ? { connectionId } : {}),
+  };
+  const invoiceRef = await prisma.externalReference.findFirst({ where: whereInvoice });
+  const customerRef = await prisma.externalReference.findFirst({ where: whereCustomer });
   const latestJob = await prisma.syncJob.findFirst({
-    where: { quoteId },
+    where: { quoteId, ...(connectionId ? { connectionId } : {}) },
     orderBy: { createdAt: "desc" },
     include: { logs: { orderBy: { createdAt: "asc" }, take: 20 } },
   });
   return { invoiceRef, customerRef, latestJob };
 }
 
-export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJobId?: string }) {
+export async function syncQuoteToQuickBooks(
+  quoteId: string,
+  options?: { retryJobId?: string; demoSessionId?: string | null },
+) {
   const cfg = getQboConfig();
   if (!cfg.configured) {
     throw new Error("QuickBooks is not configured. Set QBO_* and TOKEN_ENCRYPTION_KEY in .env.local");
   }
 
-  const connection = await getActiveQuickBooksConnection();
+  const connection = await getActiveQuickBooksConnection(options?.demoSessionId ?? null);
   if (!connection) {
-    throw new Error("QuickBooks is not connected. Open QuickBooks → Connect first.");
+    throw new Error("QuickBooks is not connected. Open QuickBooks -> Connect first.");
   }
 
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
     include: {
       client: true,
-      items: { include: { product: true, material: true }, orderBy: { sortOrder: "asc" } },
+      items: { include: { product: { include: { options: true } }, material: true }, orderBy: { sortOrder: "asc" } },
     },
   });
   if (!quote) throw new Error("Quote not found");
@@ -79,13 +81,15 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
     throw new Error("Only approved quotes can be synced to QuickBooks");
   }
 
-  const existingInvoice = await prisma.externalReference.findUnique({
+  // Per-connection sync state: each QBO realm (one per visitor demo session) has its
+  // own invoice ref + idempotency key for a given quote. Two visitors syncing the
+  // same approved seed quote to their own sandboxes do NOT collide.
+  const existingInvoice = await prisma.externalReference.findFirst({
     where: {
-      quoteId_provider_entityType: {
-        quoteId,
-        provider: "quickbooks",
-        entityType: "invoice",
-      },
+      quoteId,
+      provider: "quickbooks",
+      entityType: "invoice",
+      connectionId: connection.id,
     },
   });
   if (existingInvoice) {
@@ -97,7 +101,7 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
     };
   }
 
-  const key = idempotencyKey(quoteId);
+  const key = idempotencyKey(quoteId, connection.id);
   let job =
     options?.retryJobId
       ? await prisma.syncJob.findUniqueOrThrow({ where: { id: options.retryJobId } })
@@ -113,13 +117,12 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
       },
     });
   } else if (job.status === "success") {
-    const ref = await prisma.externalReference.findUnique({
+    const ref = await prisma.externalReference.findFirst({
       where: {
-        quoteId_provider_entityType: {
-          quoteId,
-          provider: "quickbooks",
-          entityType: "invoice",
-        },
+        quoteId,
+        provider: "quickbooks",
+        entityType: "invoice",
+        connectionId: connection.id,
       },
     });
     if (ref) {
@@ -150,13 +153,12 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
     }
 
     let customerId: string;
-    const existingCustomerRef = await prisma.externalReference.findUnique({
+    const existingCustomerRef = await prisma.externalReference.findFirst({
       where: {
-        quoteId_provider_entityType: {
-          quoteId,
-          provider: "quickbooks",
-          entityType: "customer",
-        },
+        quoteId,
+        provider: "quickbooks",
+        entityType: "customer",
+        connectionId: connection.id,
       },
     });
 
@@ -189,31 +191,47 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
           customerId,
         });
       }
-      await prisma.externalReference.upsert({
+      const existingCust = await prisma.externalReference.findFirst({
         where: {
-          quoteId_provider_entityType: {
-            quoteId,
-            provider: "quickbooks",
-            entityType: "customer",
-          },
-        },
-        create: {
           quoteId,
           provider: "quickbooks",
           entityType: "customer",
-          externalId: customerId,
+          connectionId: connection.id,
         },
-        update: { externalId: customerId },
       });
+      if (existingCust) {
+        await prisma.externalReference.update({
+          where: { id: existingCust.id },
+          data: { externalId: customerId },
+        });
+      } else {
+        await prisma.externalReference.create({
+          data: {
+            quoteId,
+            connectionId: connection.id,
+            provider: "quickbooks",
+            entityType: "customer",
+            externalId: customerId,
+          },
+        });
+      }
     }
 
     const lines = quote.items.map((item) => {
       const qty = item.quantity;
       const total = num(item.lineTotal);
       const unitPrice = qty > 0 ? Math.round((total / qty) * 100) / 100 : total;
-      const desc =
-        item.label ??
-        `${item.product.name} — ${item.material.name} (${item.width}×${item.height} ${item.product.dimensionUnitLabel})`;
+      const optionIds = Array.isArray(item.optionIds) ? (item.optionIds as string[]) : [];
+      const selectedOpts = (item.product.options ?? [])
+        .filter((o) => optionIds.includes(o.id))
+        .map((o) => o.name);
+      const specBits = [
+        item.material.name,
+        `${item.width}×${item.height} ${item.product.dimensionUnitLabel}`,
+        ...selectedOpts,
+      ];
+      const title = item.label?.trim() || item.product.name;
+      const desc = `${title} - ${specBits.join(" · ")}`;
       return { description: desc, quantity: qty, unitPrice };
     });
 
@@ -229,6 +247,7 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
     await prisma.externalReference.create({
       data: {
         quoteId,
+        connectionId: connection.id,
         provider: "quickbooks",
         entityType: "invoice",
         externalId: invoice.Id,
@@ -237,17 +256,16 @@ export async function syncQuoteToQuickBooks(quoteId: string, options?: { retryJo
       },
     });
 
-    await prisma.quote.update({
-      where: { id: quoteId },
-      data: { status: QuoteStatus.synced },
-    });
-
+    // Note: we intentionally do NOT flip `Quote.status` to "synced" here.
+    // The same approved quote can be synced to multiple QBO realms (one per
+    // demo-session visitor), so a single global status is ambiguous. Per-realm
+    // sync state lives in ExternalReference + SyncJob, which the UI reads.
     await prisma.quoteStatusHistory.create({
       data: {
         quoteId,
         fromStatus: quote.status,
-        toStatus: QuoteStatus.synced,
-        note: `Synced to QuickBooks invoice ${invoice.Id}`,
+        toStatus: quote.status,
+        note: `Synced to QuickBooks invoice ${invoice.Id} (realm ${tokenResult.connection.realmId})`,
       },
     });
 

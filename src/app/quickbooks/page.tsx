@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getActiveQuickBooksConnection } from "@/modules/quickbooks/lib/connection-store";
 import { getQboConfig } from "@/modules/quickbooks/lib/config";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button-styles";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +12,17 @@ export const dynamic = "force-dynamic";
 
 export default async function QuickBooksHubPage() {
   const cfg = getQboConfig();
-  const connection = await getActiveQuickBooksConnection();
+  const demoSessionId = await ensureDemoSessionId();
+  const connection = await getActiveQuickBooksConnection(demoSessionId);
+  // Sync stats are per-connection so each visitor sees only their own sync activity.
+  const syncJobsWhere = connection
+    ? { connectionId: connection.id }
+    : { connectionId: "00000000-0000-0000-0000-000000000000" };
   const [approvedCount, syncJobCount, recentJobs] = await Promise.all([
     prisma.quote.count({ where: { status: { in: ["approved", "synced"] } } }),
-    prisma.syncJob.count(),
+    prisma.syncJob.count({ where: syncJobsWhere }),
     prisma.syncJob.findMany({
+      where: syncJobsWhere,
       orderBy: { updatedAt: "desc" },
       take: 5,
       include: { quote: { select: { quoteNumber: true } } },
@@ -27,7 +34,7 @@ export default async function QuickBooksHubPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">QuickBooks integration</h1>
         <p className="text-muted-foreground text-sm">
-          B2B quote-to-invoice workflow for a services company — connect QuickBooks Online, sync
+          B2B quote-to-invoice workflow for a services company - connect QuickBooks Online, sync
           approved quotes, and track reliability.
         </p>
       </div>
