@@ -23,7 +23,7 @@ export default async function HomePage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Quotes</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Open a quote to configure lines, pricing is calculated on the server.
+            Custom framing CPQ - moulding catalog, mat/glass/mount options, server-side pricing, QuickBooks invoice sync.
           </p>
         </div>
         <Link href="/quotes/new" className={cn(buttonVariants())}>
@@ -34,22 +34,31 @@ export default async function HomePage() {
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle>Modules</CardTitle>
-          <CardDescription>Feature areas in this demo app.</CardDescription>
+          <CardDescription>Phase 1 scope - pricing engine, quote-to-order, QuickBooks sync.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
           <div className="rounded-md border bg-card p-3 space-y-2">
-            <p className="font-medium">Quote builder</p>
+            <p className="font-medium">Configurator &amp; quoting</p>
             <p className="text-muted-foreground">
-              Configurable products, server-side pricing, PDF export, orders.
+              Per-line framing configurator with moulding profile, glass, mat, mounting. Server-side pricing - moulding billed per linear foot, glass &amp; mat per sq ft, labor by setup + hourly. Branded PDF, draft -> approved -> order.
             </p>
             <Link href="/quotes/new" className="underline">
               Create quote
             </Link>
           </div>
           <div className="rounded-md border bg-card p-3 space-y-2">
+            <p className="font-medium">Catalog</p>
+            <p className="text-muted-foreground">
+              Moulding library with supplier, profile width, per-foot pricing, and stock. Glass tiers, mat options, mounting hardware. Pricing rules live in the database - nothing hardcoded in the UI.
+            </p>
+            <Link href="/catalog" className="underline">
+              Browse catalog
+            </Link>
+          </div>
+          <div className="rounded-md border bg-card p-3 space-y-2">
             <p className="font-medium">QuickBooks invoice sync</p>
             <p className="text-muted-foreground">
-              OAuth 2.0, encrypted tokens, quote-to-invoice with sync jobs and logs.
+              OAuth 2.0 with encrypted, auto-refreshed tokens. Approved quote -> QBO customer + invoice via idempotent, retry-safe sync jobs with per-quote logs. Visitor-scoped: each demo session connects its own sandbox.
             </p>
             <Link href="/quickbooks" className="underline">
               Open QuickBooks module
