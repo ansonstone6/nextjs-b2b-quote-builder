@@ -35,9 +35,9 @@ export function validateQboConfig(): QboConfigValidation {
   if (!clientId) {
     errors.push("QBO_CLIENT_ID is missing in .env.local");
   } else if (PLACEHOLDER_CLIENT_IDS.has(clientId.toLowerCase())) {
-    errors.push("QBO_CLIENT_ID is still the placeholder — paste your Intuit Development Client ID");
+    errors.push("QBO_CLIENT_ID is still the placeholder - paste your Intuit Development Client ID");
   } else if (clientId.length < 20) {
-    errors.push("QBO_CLIENT_ID looks too short — use the Client ID from Intuit Developer → Keys & OAuth");
+    errors.push("QBO_CLIENT_ID looks too short - use the Client ID from Intuit Developer -> Keys & OAuth");
   }
 
   if (!clientSecret) {
@@ -53,7 +53,7 @@ export function validateQboConfig(): QboConfigValidation {
       const u = new URL(redirectUri);
       if (u.pathname !== "/api/quickbooks/auth/callback") {
         warnings.push(
-          `Redirect path is ${u.pathname} — expected /api/quickbooks/auth/callback (must match Intuit app settings exactly)`,
+          `Redirect path is ${u.pathname} - expected /api/quickbooks/auth/callback (must match Intuit app settings exactly)`,
         );
       }
       if (u.protocol !== "http:" && u.protocol !== "https:") {
@@ -101,7 +101,7 @@ export function getQboConfig() {
     tokenUrl,
     apiBase,
     /**
-     * Intuit OAuth scopes. We only request `com.intuit.quickbooks.accounting` — that's all
+     * Intuit OAuth scopes. We only request `com.intuit.quickbooks.accounting` - that's all
      * the invoice sync needs. Requesting `openid profile email` here would require the app
      * to have "Sign in with Intuit" enabled, otherwise Intuit redirects to /oauth2/error.
      */

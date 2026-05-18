@@ -157,7 +157,7 @@ export function QuickBooksSyncPanel({
         {sync?.job ? (
           <p className="text-muted-foreground text-xs">
             Job {sync.job.id.slice(0, 8)}… · {sync.job.status}
-            {sync.job.lastError ? ` — ${sync.job.lastError}` : ""}{" "}
+            {sync.job.lastError ? ` - ${sync.job.lastError}` : ""}{" "}
             <Link href={`/quickbooks/sync/${sync.job.id}`} className="underline">
               View logs
             </Link>

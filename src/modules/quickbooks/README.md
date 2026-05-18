@@ -28,7 +28,7 @@ Approved quotes in the main builder (`/quotes/[id]`) show a **Sync to QuickBooks
 
 | Symptom | Fix |
 |---------|-----|
-| Intuit says **"undefined didn't connect"** | `QBO_CLIENT_ID` is missing, still the `.env.example` placeholder, or wrong app. Copy **Development** Client ID from Intuit → Keys & OAuth. Restart the dev server. |
+| Intuit says **"undefined didn't connect"** | `QBO_CLIENT_ID` is missing, still the `.env.example` placeholder, or wrong app. Copy **Development** Client ID from Intuit -> Keys & OAuth. Restart the dev server. |
 | Redirect / connection error | `QBO_REDIRECT_URI` must match **exactly** what is listed in Intuit (including `http` vs `https`, host, port, path). Local default: `http://localhost:3000/api/quickbooks/auth/callback` |
 | Works locally, fails on Vercel | Add production redirect URI in Intuit and set `QBO_REDIRECT_URI` to `https://your-app.vercel.app/api/quickbooks/auth/callback` in Vercel env vars. |
 
@@ -40,10 +40,10 @@ See root `.env.example` for `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_REDIRECT_
 
 ## Database tables
 
-- `integration_connections` — realm ID, encrypted access/refresh tokens
-- `external_references` — QuickBooks customer & invoice IDs per quote (idempotency)
-- `sync_jobs` — pending / running / success / failed, retry count, idempotency key
-- `sync_logs` — steps: token refresh, customer search/create, invoice create, failures, retries
+- `integration_connections` - realm ID, encrypted access/refresh tokens
+- `external_references` - QuickBooks customer & invoice IDs per quote (idempotency)
+- `sync_jobs` - pending / running / success / failed, retry count, idempotency key
+- `sync_logs` - steps: token refresh, customer search/create, invoice create, failures, retries
 
 ## Sync flow
 

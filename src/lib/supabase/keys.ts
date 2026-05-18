@@ -1,5 +1,5 @@
 /**
- * Supabase dashboard (Settings → API Keys) now uses **publishable** and **secret** keys.
+ * Supabase dashboard (Settings -> API Keys) now uses **publishable** and **secret** keys.
  * Legacy `anon` / `service_role` JWT keys still work; we read them as fallbacks until you rotate.
  *
  * @see https://supabase.com/docs/guides/api/api-keys
@@ -28,7 +28,7 @@ export function requirePublishablePair(): { url: string; publishableKey: string 
   if (!url || !publishableKey) {
     throw new Error(
       "Missing Supabase client credentials. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY " +
-        "(Settings → API Keys → Publishable). Legacy NEXT_PUBLIC_SUPABASE_ANON_KEY is still accepted as a fallback.",
+        "(Settings -> API Keys -> Publishable). Legacy NEXT_PUBLIC_SUPABASE_ANON_KEY is still accepted as a fallback.",
     );
   }
   return { url, publishableKey };
@@ -40,7 +40,7 @@ export function requireSecretPair(): { url: string; secretKey: string } {
   if (!url || !secretKey) {
     throw new Error(
       "Missing Supabase admin credentials. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY " +
-        "(Settings → API Keys → Secret). Legacy SUPABASE_SERVICE_ROLE_KEY is still accepted as a fallback.",
+        "(Settings -> API Keys -> Secret). Legacy SUPABASE_SERVICE_ROLE_KEY is still accepted as a fallback.",
     );
   }
   return { url, secretKey };

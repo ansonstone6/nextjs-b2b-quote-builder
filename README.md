@@ -33,7 +33,7 @@ Copy [`.env.example`](./.env.example) to `.env.local` and adjust.
 
 The **direct** host `db.<project>.supabase.co:5432` is often **IPv6-only**. On many home or office networks you will see Prisma **`P1001` (can’t reach database server)**.
 
-Use the **Session pooler** URI from the dashboard instead: **Project → Connect → Connection pooling → Session mode** (host like `*.pooler.supabase.com`, port `5432`). Put that full URI in `DATABASE_URL`.
+Use the **Session pooler** URI from the dashboard instead: **Project -> Connect -> Connection pooling -> Session mode** (host like `*.pooler.supabase.com`, port `5432`). Put that full URI in `DATABASE_URL`.
 
 Prisma CLI and `tsx` scripts load env in this order (see [`prisma.config.ts`](./prisma.config.ts) and [`prisma/load-env.ts`](./prisma/load-env.ts)):
 
@@ -55,8 +55,8 @@ npm run db:seed
 npm run dev
 ```
 
-- App: [http://localhost:3000](http://localhost:3000) — quotes list and builder.
-- AI chat: [http://localhost:3000/chat](http://localhost:3000/chat) — needs `OPENAI_API_KEY`.
+- App: [http://localhost:3000](http://localhost:3000) - quotes list and builder.
+- AI chat: [http://localhost:3000/chat](http://localhost:3000/chat) - needs `OPENAI_API_KEY`.
 
 ## npm scripts
 

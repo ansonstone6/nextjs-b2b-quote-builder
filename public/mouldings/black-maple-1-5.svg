@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" role="img" aria-label="Black Maple 1.5 inch profile moulding">
+  <defs>
+    <linearGradient id="maple" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="50%" stop-color="#0e0e0e"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </linearGradient>
+    <pattern id="mapleGrain" width="200" height="140" patternUnits="userSpaceOnUse">
+      <rect width="200" height="140" fill="url(#maple)"/>
+      <path d="M0 20 Q 60 24 120 20 T 200 22" stroke="#2a2a2a" stroke-width="0.5" fill="none" opacity="0.6"/>
+      <path d="M0 44 Q 70 40 140 44 T 200 42" stroke="#1d1d1d" stroke-width="0.5" fill="none" opacity="0.5"/>
+      <path d="M0 70 Q 60 74 120 70 T 200 72" stroke="#2a2a2a" stroke-width="0.5" fill="none" opacity="0.6"/>
+      <path d="M0 96 Q 70 92 140 96 T 200 94" stroke="#1d1d1d" stroke-width="0.5" fill="none" opacity="0.5"/>
+      <path d="M0 118 Q 60 122 120 118 T 200 120" stroke="#2a2a2a" stroke-width="0.5" fill="none" opacity="0.55"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="140" fill="url(#mapleGrain)"/>
+  <rect x="2" y="2" width="196" height="136" fill="none" stroke="#000000" stroke-width="2" opacity="0.6"/>
+  <rect x="16" y="16" width="168" height="108" fill="none" stroke="#000000" stroke-width="1" opacity="0.5"/>
+</svg>
