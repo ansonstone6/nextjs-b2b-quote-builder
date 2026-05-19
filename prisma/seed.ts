@@ -25,7 +25,7 @@ async function main() {
   await prisma.client.deleteMany();
 
   // --- Clients (NYC luxury B2B)
-  const [maison, halden] = await Promise.all([
+  const [maison, halden] = await prisma.$transaction([
     prisma.client.create({
       data: {
         companyName: "Maison Avery Couture",
@@ -56,7 +56,7 @@ async function main() {
 
   // --- Mouldings (materials). Per-foot pricing; supplier + profile width surfaced in catalog.
   const [walnut2, blackMaple15, gildedOrnate3, oakNatural, ebonized125, brushedAluminum] =
-    await Promise.all([
+    await prisma.$transaction([
       prisma.material.create({
         data: {
           name: "Walnut 2\" Profile",
@@ -161,7 +161,7 @@ async function main() {
 
   // --- Options. Glass + mat are priced PER SQUARE FOOT (area modifier).
   // Mount + hardware are flat fees per piece. Rush is a percentage of subtotal.
-  const customFrameOpts = await Promise.all([
+  const customFrameOpts = await prisma.$transaction([
     prisma.productOption.create({
       data: {
         productId: customFrame.id,
@@ -252,7 +252,7 @@ async function main() {
     }),
   ]);
 
-  const floatMountOpts = await Promise.all([
+  const floatMountOpts = await prisma.$transaction([
     prisma.productOption.create({
       data: {
         productId: floatMount.id,
@@ -295,7 +295,7 @@ async function main() {
     }),
   ]);
 
-  const shadowBoxOpts = await Promise.all([
+  const shadowBoxOpts = await prisma.$transaction([
     prisma.productOption.create({
       data: {
         productId: shadowBox.id,
