@@ -3,6 +3,8 @@ import Link from "next/link";
 const mainNav = [
   { href: "/", label: "Quotes" },
   { href: "/quotes/new", label: "New quote" },
+  { href: "/catalog", label: "Catalog" },
+  { href: "/admin", label: "Admin" },
 ];
 
 const quickbooksNav = [
@@ -18,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="shrink-0 border-b bg-card px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="font-semibold tracking-tight">
-            Quote builder
+            Custom Framing Studio · CPQ
           </Link>
           <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
             {mainNav.map((item) => (
