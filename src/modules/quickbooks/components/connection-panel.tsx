@@ -132,7 +132,7 @@ export function ConnectionPanel({
               >
                 Intuit Developer
               </a>
-              , open your app -> <strong>Keys &amp; OAuth</strong> -> copy the <strong>Development</strong>{" "}
+              , open your app → <strong>Keys &amp; OAuth</strong> → copy the <strong>Development</strong>{" "}
               Client ID and Client Secret (not Production unless you use a live company).
             </p>
             <p>

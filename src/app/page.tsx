@@ -40,7 +40,7 @@ export default async function HomePage() {
           <div className="rounded-md border bg-card p-3 space-y-2">
             <p className="font-medium">Configurator &amp; quoting</p>
             <p className="text-muted-foreground">
-              Per-line framing configurator with moulding profile, glass, mat, mounting. Server-side pricing - moulding billed per linear foot, glass &amp; mat per sq ft, labor by setup + hourly. Branded PDF, draft -> approved -> order.
+              Per-line framing configurator with moulding profile, glass, mat, mounting. Server-side pricing — moulding billed per linear foot, glass &amp; mat per sq ft, labor by setup + hourly. Branded PDF, draft → approved → order.
             </p>
             <Link href="/quotes/new" className="underline">
               Create quote
@@ -58,7 +58,7 @@ export default async function HomePage() {
           <div className="rounded-md border bg-card p-3 space-y-2">
             <p className="font-medium">QuickBooks invoice sync</p>
             <p className="text-muted-foreground">
-              OAuth 2.0 with encrypted, auto-refreshed tokens. Approved quote -> QBO customer + invoice via idempotent, retry-safe sync jobs with per-quote logs. Visitor-scoped: each demo session connects its own sandbox.
+              OAuth 2.0 with encrypted, auto-refreshed tokens. Approved quote → QBO customer + invoice via idempotent, retry-safe sync jobs with per-quote logs. Visitor-scoped: each demo session connects its own sandbox.
             </p>
             <Link href="/quickbooks" className="underline">
               Open QuickBooks module
