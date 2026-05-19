@@ -45,12 +45,14 @@ const styles = StyleSheet.create({
   breakdownRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingTop: 1,
-    paddingBottom: 1,
+    alignItems: "flex-start",
+    paddingTop: 3,
+    paddingBottom: 3,
   },
-  breakdownLabel: { fontSize: 8.5, color: "#444", flex: 1 },
-  breakdownDetail: { fontSize: 7.5, color: "#888" },
-  breakdownAmount: { fontSize: 8.5, color: "#444", textAlign: "right" },
+  breakdownLeft: { flexDirection: "column", flex: 1, paddingRight: 8 },
+  breakdownLabel: { fontSize: 8.5, color: "#444", lineHeight: 1.2 },
+  breakdownDetail: { fontSize: 7.5, color: "#888", lineHeight: 1.2, marginTop: 1 },
+  breakdownAmount: { fontSize: 8.5, color: "#444", textAlign: "right", lineHeight: 1.2 },
   totals: { marginTop: 22, alignSelf: "flex-end", width: "45%" },
   totalRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 5 },
   grand: {
@@ -144,7 +146,7 @@ export function QuotePdfDocument({ brand, quote }: Props) {
                   <View style={styles.breakdownBox}>
                     {computed.rows.map((r) => (
                       <View key={r.key} style={styles.breakdownRow}>
-                        <View style={{ flex: 1, paddingRight: 8 }}>
+                        <View style={styles.breakdownLeft}>
                           <Text style={styles.breakdownLabel}>{r.label}</Text>
                           {r.detail ? (
                             <Text style={styles.breakdownDetail}>{r.detail}</Text>
