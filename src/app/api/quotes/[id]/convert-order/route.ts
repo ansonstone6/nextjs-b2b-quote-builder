@@ -2,6 +2,9 @@ import { OrderStatus, QuoteStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeQuote } from "@/lib/quotes/serialize";
+import { getActiveMondayConnection } from "@/modules/monday/lib/connection-store";
+import { syncOrderToMonday } from "@/modules/monday/lib/sync";
+import { ensureDemoSessionId } from "@/modules/quickbooks/lib/demo-session";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -22,7 +25,7 @@ export async function POST(_req: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Order already exists for this quote" }, { status: 409 });
     }
 
-    await prisma.$transaction([
+    const [order] = await prisma.$transaction([
       prisma.order.create({
         data: {
           quoteId: id,
@@ -43,6 +46,16 @@ export async function POST(_req: Request, { params }: RouteParams) {
         data: { status: QuoteStatus.converted },
       }),
     ]);
+
+    // Fire-and-forget Monday push if the visitor has a connected board.
+    // Failures are recorded on the sync_job row; the response itself does not wait.
+    const demoSessionId = await ensureDemoSessionId();
+    const mondayConn = await getActiveMondayConnection(demoSessionId);
+    if (mondayConn?.defaultBoardId) {
+      void syncOrderToMonday(order.id, { demoSessionId }).catch((e) => {
+        console.error("[monday auto-sync] failed:", e);
+      });
+    }
 
     const fresh = await prisma.quote.findUniqueOrThrow({
       where: { id },

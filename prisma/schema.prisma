@@ -18,6 +18,7 @@ enum QuoteStatus {
 
 enum IntegrationProvider {
   quickbooks
+  monday
 }
 
 enum SyncJobStatus {
@@ -30,6 +31,9 @@ enum SyncJobStatus {
 enum ExternalEntityType {
   customer
   invoice
+  /// A Monday.com board item created from an Order. The externalId is the
+  /// Monday item id; metadata carries boardId + columnValues that were sent.
+  board_item
 }
 
 enum OrderStatus {
@@ -236,6 +240,13 @@ model IntegrationConnection {
   refreshTokenEncrypted String              @map("refresh_token_encrypted")
   accessTokenExpiresAt  DateTime            @map("access_token_expires_at") @db.Timestamptz(6)
   refreshTokenExpiresAt DateTime?           @map("refresh_token_expires_at") @db.Timestamptz(6)
+  /// Monday-only: which board new items should be created on. Null until the
+  /// admin picks one on the /monday/connect page. Ignored for QuickBooks.
+  defaultBoardId        String?             @map("default_board_id")
+  /// Monday-only: account subdomain slug (e.g. "acme" in acme.monday.com).
+  /// Stored at connect time from `me.account.slug` so we can build canonical
+  /// item URLs that don't 404 on the bare monday.com domain.
+  accountSlug           String?             @map("account_slug")
   connectedAt           DateTime            @default(now()) @map("connected_at") @db.Timestamptz(6)
   updatedAt             DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   syncJobs              SyncJob[]

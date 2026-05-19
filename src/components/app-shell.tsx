@@ -14,6 +14,12 @@ const quickbooksNav = [
   { href: "/quickbooks/sync", label: "Sync dashboard" },
 ];
 
+const mondayNav = [
+  { href: "/monday", label: "Monday hub" },
+  { href: "/monday/connect", label: "Connect" },
+  { href: "/monday/orders", label: "Orders" },
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -30,6 +36,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
             <span className="text-border hidden sm:inline">|</span>
             {quickbooksNav.map((item) => (
+              <Link key={item.href} href={item.href} className="hover:text-foreground">
+                {item.label}
+              </Link>
+            ))}
+            <span className="text-border hidden sm:inline">|</span>
+            {mondayNav.map((item) => (
               <Link key={item.href} href={item.href} className="hover:text-foreground">
                 {item.label}
               </Link>

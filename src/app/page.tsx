@@ -34,7 +34,7 @@ export default async function HomePage() {
       <Card className="border-primary/20 bg-primary/5">
         <CardHeader>
           <CardTitle>Modules</CardTitle>
-          <CardDescription>Phase 1 scope - pricing engine, quote-to-order, QuickBooks sync.</CardDescription>
+          <CardDescription>Phase 1 scope - pricing engine, quote-to-order, QuickBooks &amp; Monday sync.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
           <div className="rounded-md border bg-card p-3 space-y-2">
@@ -62,6 +62,15 @@ export default async function HomePage() {
             </p>
             <Link href="/quickbooks" className="underline">
               Open QuickBooks module
+            </Link>
+          </div>
+          <div className="rounded-md border bg-card p-3 space-y-2">
+            <p className="font-medium">Monday.com production board</p>
+            <p className="text-muted-foreground">
+              Personal API token (encrypted). Converting an approved quote to an order auto-pushes a Monday item on the selected board with status, client, total, due date columns mapped — and the quote PDF attached. Idempotent jobs and retries.
+            </p>
+            <Link href="/monday" className="underline">
+              Open Monday module
             </Link>
           </div>
         </CardContent>
